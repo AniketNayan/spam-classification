@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spam Classifier</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6d28d9; /* A nice violet */
+            --background-color: #f3f4f6; /* Light gray */
+            --container-bg: #ffffff;
+            --text-color: #374151;
+            --subtle-text-color: #6b7280;
+            --border-color: #d1d5db;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+        }
+
+        .classifier-container {
+            background-color: var(--container-bg);
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 90%;
+            max-width: 550px;
+            text-align: center;
+            transform: translateY(-20px);
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            color: var(--subtle-text-color);
+            margin-bottom: 2rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.2);
+        }
+
+        .submit-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #5b21b6;
+        }
+        
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        .submit-btn:disabled {
+            background-color: #a78bfa;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none; /* Hidden by default */
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #result {
+            margin-top: 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        #result.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .spam {
+            color: var(--error-text);
+            background-color: var(--error-bg);
+        }
+
+        .not-spam {
+            color: var(--success-text);
+            background-color: var(--success-bg);
+        }
+    </style>
+</head>
+<body>
+
+    <main class="classifier-container">
+        <h1>Spam Detector</h1>
+        <p>Paste an email below to see if it's spam.</p>
+        
+        <form id="classifierForm">
+            <textarea id="emailText" placeholder="Dear user, you have won a prize..." required></textarea>
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span id="btnText">Classify</span>
+                <div class="spinner" id="spinner"></div>
+            </button>
+        </form>
+        
+        <div id="result"></div>
+    </main>
+
+    <script>
+        const form = document.getElementById('classifierForm');
+        const emailText = document.getElementById('emailText');
+        const resultDiv = document.getElementById('result');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const spinner = document.getElementById('spinner');
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            if (emailText.value.trim() === "") return;
+
+            // --- Show loading state ---
+            btnText.textContent = 'Analyzing...';
+            spinner.style.display = 'block';
+            submitBtn.disabled = true;
+            resultDiv.classList.remove('visible'); // Hide previous result
+
+            // --- Simulate API call with a delay ---
+            setTimeout(() => {
+                const text = emailText.value.toLowerCase();
+                
+                // This is a placeholder for your actual model's prediction
+                const isSpam = text.includes("winner") || text.includes("free prize") || text.includes("claim now") || text.includes("$$$");
+                const prediction = isSpam ? "spam" : "not_spam";
+                
+                showResult(prediction);
+
+                // --- Restore button to normal state ---
+                btnText.textContent = 'Classify';
+                spinner.style.display = 'none';
+                submitBtn.disabled = false;
+
+            }, 1500); // 1.5 second delay to simulate processing
+        });
+
+        function showResult(prediction) {
+            if (prediction === "spam") {
+                resultDiv.textContent = 'This email is likely Spam.';
+                resultDiv.className = 'spam';
+            } else {
+                resultDiv.textContent = 'This email seems legitimate.';
+                resultDiv.className = 'not-spam';
+            }
+            resultDiv.classList.add('visible'); // Trigger the fade-in animation
+        }
+    </script>
+
+</body>
+</html>
